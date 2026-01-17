@@ -5,8 +5,8 @@ import {
   verificarLoginAtivo
 } from "../services/users";
 
-const ADMIN_LOGIN = "Molero";
-const ADMIN_SENHA = "admin123";
+const ADMIN_LOGIN = "eliteadm";
+const ADMIN_SENHA = "elite321";
 const CODIGO_CRIACAO = "Elite2026@!$";
 
 export default function Login({ onLogin }) {
