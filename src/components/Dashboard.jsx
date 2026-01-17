@@ -8,6 +8,7 @@ export default function Dashboard({ user, onLogout }) {
   /* ======================
      STATES
   ====================== */
+  const [mostrarSenha, setMostrarSenha] = useState({});
   const [linhas, setLinhas] = useState([]);
   const [percentualElite, setPercentualElite] = useState("20");
   const [mesSelecionado, setMesSelecionado] = useState(null);
@@ -122,6 +123,11 @@ export default function Dashboard({ user, onLogout }) {
     c[i][campo] = valor;
     setLinhas(c);
   }
+
+function copiarTexto(texto) {
+  if (!texto) return;
+  navigator.clipboard.writeText(texto);
+}
 
   function adicionarLinha() {
     setLinhas([
@@ -310,17 +316,40 @@ export default function Dashboard({ user, onLogout }) {
 
                 return (
                   <tr key={i} className="border-t border-zinc-800">
-                    <td>
-                      <input
-                        className="input"
-                        value={l.conta}
-                        onChange={e =>
-                          atualizar(i, "conta", e.target.value)
-                        }
-                      />
-                    </td>
 
-                    <td>
+         <td>
+  <div className="flex items-center gap-2">
+    <input
+      type={mostrarSenha[i] ? "text" : "password"}
+      className="input"
+      value={l.senha}
+      onChange={e =>
+        atualizar(i, "senha", e.target.value)
+      }
+    />
+
+    <button
+      onClick={() =>
+        setMostrarSenha(prev => ({
+          ...prev,
+          [i]: !prev[i],
+        }))
+      }
+      title="Mostrar / esconder senha"
+    >
+      {mostrarSenha[i] ? "🙈" : "👁️"}
+    </button>
+
+    <button
+      onClick={() => copiarTexto(l.senha)}
+      title="Copiar senha"
+    >
+      📋
+    </button>
+  </div>
+</td>
+
+
                       <input
                         type="password"
                         className="input"
