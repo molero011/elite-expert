@@ -11,12 +11,34 @@ import { db } from "../firebase";
 
 const USERS_COLLECTION = "users";
 
+// 🔹 VERIFICA SE EXISTE LOGIN ATIVO
+export async function verificarLoginAtivo(login) {
+  const q = query(
+    collection(db, USERS_COLLECTION),
+    where("login", "==", login),
+    where("ativo", "==", true)
+  );
+
+  const snap = await getDocs(q);
+  return !snap.empty;
+}
+
 // 🔹 CRIAR USUÁRIO
-export async function criarUsuario({ login, senha }) {
+export async function criarUsuario({
+  login,
+  senha,
+  nome,
+  role,
+  socios,
+  percentuais
+}) {
   await addDoc(collection(db, USERS_COLLECTION), {
     login,
     senha,
-    role: "user",
+    nome,
+    role,
+    socios,
+    percentuais,
     ativo: true,
     criadoEm: Date.now()
   });
@@ -34,8 +56,8 @@ export async function loginUsuario(login, senha) {
   const snap = await getDocs(q);
   if (snap.empty) return null;
 
-  const docu = snap.docs[0];
-  return { id: docu.id, ...docu.data() };
+  const d = snap.docs[0];
+  return { id: d.id, ...d.data() };
 }
 
 // 🔹 LISTAR USUÁRIOS (ADMIN)

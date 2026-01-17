@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { criarUsuario, loginUsuario } from "../services/users";
+import {
+  criarUsuario,
+  loginUsuario,
+  verificarLoginAtivo
+} from "../services/users";
 
 const ADMIN_LOGIN = "Molero";
 const ADMIN_SENHA = "admin123";
@@ -13,6 +17,7 @@ export default function Login({ onLogin }) {
   const [erro, setErro] = useState("");
   const [mostrar, setMostrar] = useState(false);
 
+  // 🔹 LOGIN
   async function entrar() {
     setErro("");
 
@@ -25,8 +30,9 @@ export default function Login({ onLogin }) {
     }
 
     const user = await loginUsuario(login, senha);
+
     if (!user) {
-      setErro("Login ou senha inválidos.");
+      setErro("Login ou senha inválidos ou usuário desativado.");
       return;
     }
 
@@ -34,6 +40,7 @@ export default function Login({ onLogin }) {
     onLogin(user);
   }
 
+  // 🔹 REGISTRO
   async function registrar() {
     setErro("");
 
@@ -47,14 +54,45 @@ export default function Login({ onLogin }) {
       return;
     }
 
-    await criarUsuario({ login, senha });
-    alert("Conta criada! Faça login.");
+    const existeAtivo = await verificarLoginAtivo(login);
+
+    if (existeAtivo) {
+      setErro("Já existe um usuário ATIVO com esse login.");
+      return;
+    }
+
+    // 👑 USUÁRIO ESPECIAL
+    if (login.toUpperCase() === "ELITE EXPERT") {
+      await criarUsuario({
+        login,
+        senha,
+        nome: "ELITE EXPERT",
+        role: "user",
+        socios: ["Sócio A", "Sócio B", "Sócio C"],
+        percentuais: [33, 33, 34]
+      });
+    } else {
+      await criarUsuario({
+        login,
+        senha,
+        nome: login.toUpperCase(),
+        role: "user",
+        socios: ["Sócio A", "Sócio B"],
+        percentuais: [50, 50]
+      });
+    }
+
+    alert("Conta criada com sucesso. Faça login.");
     setModo("login");
+    setLogin("");
+    setSenha("");
+    setCodigo("");
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm">
+
         <h1 className="text-2xl font-bold mb-6 text-center text-elite">
           Elite Expert
         </h1>
@@ -75,6 +113,7 @@ export default function Login({ onLogin }) {
             onChange={e => setSenha(e.target.value)}
           />
           <button
+            type="button"
             onClick={() => setMostrar(!mostrar)}
             className="absolute right-2 top-1/2 -translate-y-1/2"
           >
@@ -108,6 +147,7 @@ export default function Login({ onLogin }) {
             ? "Criar conta (precisa de código)"
             : "Já tenho conta, fazer login"}
         </p>
+
       </div>
     </div>
   );

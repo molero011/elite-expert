@@ -1,22 +1,46 @@
 import { useEffect, useState } from "react";
-import { listarUsuarios, toggleUsuario } from "../services/users";
+import {
+  listarUsuarios,
+  toggleUsuario,
+  deletarUsuario
+} from "../services/users";
 
 export default function Admin({ user, onLogout }) {
   const [usuarios, setUsuarios] = useState([]);
 
   useEffect(() => {
-    if (user.role !== "admin") {
+    if (!user || user.role !== "admin") {
       window.location.href = "/";
       return;
     }
 
-    async function carregar() {
-      const lista = await listarUsuarios();
-      setUsuarios(lista);
-    }
-
     carregar();
   }, []);
+
+  async function carregar() {
+    const lista = await listarUsuarios();
+    setUsuarios(lista);
+  }
+
+  async function alternarStatus(u) {
+    await toggleUsuario(u.id, !u.ativo);
+    setUsuarios(us =>
+      us.map(x =>
+        x.id === u.id ? { ...x, ativo: !x.ativo } : x
+      )
+    );
+  }
+
+  async function apagarUsuario(u) {
+    const ok = window.confirm(
+      `Tem certeza que deseja APAGAR o usuário "${u.login}"?\n\nEssa ação é irreversível.`
+    );
+
+    if (!ok) return;
+
+    await deletarUsuario(u.id);
+    setUsuarios(us => us.filter(x => x.id !== u.id));
+  }
 
   return (
     <div className="min-h-screen bg-black text-white p-10">
@@ -47,19 +71,19 @@ export default function Admin({ user, onLogout }) {
               <td className="p-2">
                 {u.ativo ? "Ativo" : "Desativado"}
               </td>
-              <td className="p-2">
+              <td className="p-2 flex gap-4">
                 <button
-                  onClick={async () => {
-                    await toggleUsuario(u.id, !u.ativo);
-                    setUsuarios(us =>
-                      us.map(x =>
-                        x.id === u.id ? { ...x, ativo: !x.ativo } : x
-                      )
-                    );
-                  }}
+                  onClick={() => alternarStatus(u)}
                   className="text-yellow-400"
                 >
-                  Ativar / Desativar
+                  {u.ativo ? "Desativar" : "Ativar"}
+                </button>
+
+                <button
+                  onClick={() => apagarUsuario(u)}
+                  className="text-red-400"
+                >
+                  Apagar
                 </button>
               </td>
             </tr>
