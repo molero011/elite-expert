@@ -9,38 +9,18 @@ export default function Admin({ user, onLogout }) {
   const [usuarios, setUsuarios] = useState([]);
 
   useEffect(() => {
-    if (!user || user.role !== "admin") {
+    if (user.role !== "admin") {
       window.location.href = "/";
       return;
     }
 
+    async function carregar() {
+      const lista = await listarUsuarios();
+      setUsuarios(lista);
+    }
+
     carregar();
   }, []);
-
-  async function carregar() {
-    const lista = await listarUsuarios();
-    setUsuarios(lista);
-  }
-
-  async function alternarStatus(u) {
-    await toggleUsuario(u.id, !u.ativo);
-    setUsuarios(us =>
-      us.map(x =>
-        x.id === u.id ? { ...x, ativo: !x.ativo } : x
-      )
-    );
-  }
-
-  async function apagarUsuario(u) {
-    const ok = window.confirm(
-      `Tem certeza que deseja APAGAR o usuário "${u.login}"?\n\nEssa ação é irreversível.`
-    );
-
-    if (!ok) return;
-
-    await deletarUsuario(u.id);
-    setUsuarios(us => us.filter(x => x.id !== u.id));
-  }
 
   return (
     <div className="min-h-screen bg-black text-white p-10">
@@ -73,15 +53,28 @@ export default function Admin({ user, onLogout }) {
               </td>
               <td className="p-2 flex gap-4">
                 <button
-                  onClick={() => alternarStatus(u)}
                   className="text-yellow-400"
+                  onClick={async () => {
+                    await toggleUsuario(u.id, !u.ativo);
+                    setUsuarios(us =>
+                      us.map(x =>
+                        x.id === u.id
+                          ? { ...x, ativo: !x.ativo }
+                          : x
+                      )
+                    );
+                  }}
                 >
-                  {u.ativo ? "Desativar" : "Ativar"}
+                  Ativar / Desativar
                 </button>
 
                 <button
-                  onClick={() => apagarUsuario(u)}
-                  className="text-red-400"
+                  className="text-red-500"
+                  onClick={async () => {
+                    if (!confirm("Deseja apagar este usuário?")) return;
+                    await deletarUsuario(u.id);
+                    setUsuarios(us => us.filter(x => x.id !== u.id));
+                  }}
                 >
                   Apagar
                 </button>

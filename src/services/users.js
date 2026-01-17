@@ -5,25 +5,29 @@ import {
   query,
   where,
   updateDoc,
+  deleteDoc,
   doc
 } from "firebase/firestore";
 import { db } from "../firebase";
 
 const USERS_COLLECTION = "users";
 
-// 🔹 VERIFICA SE EXISTE LOGIN ATIVO
+/* =========================
+   VERIFICAR LOGIN ATIVO
+========================= */
 export async function verificarLoginAtivo(login) {
   const q = query(
     collection(db, USERS_COLLECTION),
     where("login", "==", login),
     where("ativo", "==", true)
   );
-
   const snap = await getDocs(q);
   return !snap.empty;
 }
 
-// 🔹 CRIAR USUÁRIO
+/* =========================
+   CRIAR USUÁRIO
+========================= */
 export async function criarUsuario({
   login,
   senha,
@@ -32,6 +36,8 @@ export async function criarUsuario({
   socios,
   percentuais
 }) {
+  if (!senha) throw new Error("Senha obrigatória");
+
   await addDoc(collection(db, USERS_COLLECTION), {
     login,
     senha,
@@ -44,7 +50,9 @@ export async function criarUsuario({
   });
 }
 
-// 🔹 LOGIN
+/* =========================
+   LOGIN
+========================= */
 export async function loginUsuario(login, senha) {
   const q = query(
     collection(db, USERS_COLLECTION),
@@ -60,7 +68,9 @@ export async function loginUsuario(login, senha) {
   return { id: d.id, ...d.data() };
 }
 
-// 🔹 LISTAR USUÁRIOS (ADMIN)
+/* =========================
+   LISTAR USUÁRIOS (ADMIN)
+========================= */
 export async function listarUsuarios() {
   const snap = await getDocs(collection(db, USERS_COLLECTION));
   return snap.docs.map(d => ({
@@ -69,7 +79,16 @@ export async function listarUsuarios() {
   }));
 }
 
-// 🔹 ATIVAR / DESATIVAR
+/* =========================
+   ATIVAR / DESATIVAR
+========================= */
 export async function toggleUsuario(id, ativo) {
   await updateDoc(doc(db, USERS_COLLECTION, id), { ativo });
+}
+
+/* =========================
+   DELETAR USUÁRIO (ADMIN)
+========================= */
+export async function deletarUsuario(id) {
+  await deleteDoc(doc(db, USERS_COLLECTION, id));
 }
