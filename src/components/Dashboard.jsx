@@ -154,6 +154,7 @@ export default function Dashboard({ user, onLogout }) {
       <Header user={user} onLogout={onLogout} />
 
       <main className="max-w-7xl mx-auto px-6 py-10">
+
         {/* % ELITE */}
         <div className="mb-6 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-sm">
           <p className="text-sm text-zinc-400">% Elite</p>
@@ -164,6 +165,114 @@ export default function Dashboard({ user, onLogout }) {
               setPercentualElite(limparNumero(e.target.value))
             }
           />
+        </div>
+
+        {/* MESES */}
+        <div className="flex gap-2 mb-8 flex-wrap">
+          <button
+            onClick={() => setMesSelecionado(null)}
+            className={`px-3 py-1 rounded-full ${
+              mesSelecionado === null
+                ? "bg-elite text-black"
+                : "bg-zinc-800"
+            }`}
+          >
+            TOTAL
+          </button>
+
+          {MESES.map((m, i) => (
+            <button
+              key={i}
+              onClick={() => setMesSelecionado(i)}
+              className={`px-3 py-1 rounded-full ${
+                mesSelecionado === i
+                  ? "bg-elite text-black"
+                  : "bg-zinc-800"
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+
+        {/* SÓCIOS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          {["a", "b"].map(k => (
+            <div
+              key={k}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 relative"
+            >
+              {editandoSocio === k ? (
+                <input
+                  autoFocus
+                  className="input mb-2"
+                  value={socios[k]}
+                  onChange={e =>
+                    setSocios({ ...socios, [k]: e.target.value })
+                  }
+                  onBlur={() => setEditandoSocio(null)}
+                />
+              ) : (
+                <>
+                  <p className="text-zinc-400 text-sm">Sócio</p>
+                  <h3 className="text-xl font-semibold">{socios[k]}</h3>
+                </>
+              )}
+
+              <button
+                onClick={() => setEditandoSocio(k)}
+                className="absolute top-3 right-3 text-zinc-400 hover:text-elite"
+              >
+                ✏️
+              </button>
+
+              <p className="text-elite text-2xl font-bold mt-2">
+                {moeda(k === "a" ? socioAValor : socioBValor)}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* STATUS ELITE */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-zinc-900 p-6 rounded-2xl">
+            <p>Elite Total</p>
+            <p className="text-sky-400 font-bold">{moeda(eliteTotal)}</p>
+          </div>
+
+          <div className="bg-zinc-900 p-6 rounded-2xl">
+            <p>Elite Pago</p>
+            <p className="text-green-400 font-bold">{moeda(elitePago)}</p>
+          </div>
+
+          <div className="bg-zinc-900 p-6 rounded-2xl">
+            <p>Elite Pendente</p>
+            <p className="text-red-400 font-bold">{moeda(elitePendente)}</p>
+          </div>
+        </div>
+
+        {/* 🍕 PIZZA */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-14">
+          <h3 className="text-center font-semibold mb-6">
+            Distribuição Financeira
+          </h3>
+
+          <div className="flex justify-center">
+            <PieChart width={360} height={360}>
+              <Pie
+                data={dadosPizza}
+                dataKey="value"
+                innerRadius={80}
+                outerRadius={140}
+              >
+                {dadosPizza.map((_, i) => (
+                  <Cell key={i} fill={CORES[i]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={v => moeda(v)} />
+              <Legend />
+            </PieChart>
+          </div>
         </div>
 
         {/* TABELA */}
@@ -329,6 +438,7 @@ export default function Dashboard({ user, onLogout }) {
         >
           + Adicionar Conta
         </button>
+
       </main>
     </div>
   );
