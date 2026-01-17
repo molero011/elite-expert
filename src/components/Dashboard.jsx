@@ -4,9 +4,12 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 export default function Dashboard({ user, onLogout }) {
 
-  const STORAGE_KEY = `elite_dashboard_${user.login}`;
+  /* ======================
+     STORAGE FIXO (NUNCA MAIS SOME)
+  ====================== */
+  const STORAGE_KEY = "elite_dashboard_data";
 
-  const isEliteUnico = user.login === "Elite";
+  const isEliteUnico = user?.login === "Elite";
 
   /* ======================
      STATES
@@ -30,7 +33,11 @@ export default function Dashboard({ user, onLogout }) {
     if (salvo) {
       setLinhas(salvo.linhas || []);
       setPercentualElite(salvo.percentualElite || "20");
-      setSocios(salvo.socios || socios);
+      setSocios(
+        isEliteUnico
+          ? { a: salvo.socios?.a || "Sócio Único" }
+          : salvo.socios || { a: "Sócio A", b: "Sócio B" }
+      );
     }
   }, []);
 
@@ -75,12 +82,11 @@ export default function Dashboard({ user, onLogout }) {
 
   linhas.filter(pertenceAoMes).forEach(l => {
     const lucro = calcularLucro(l);
-
-    const percLinha = l.percentualElite
+    const perc = l.percentualElite
       ? num(l.percentualElite)
       : num(percentualElite);
 
-    const eliteLinha = lucro > 0 ? (lucro * percLinha) / 100 : 0;
+    const eliteLinha = lucro > 0 ? (lucro * perc) / 100 : 0;
 
     totalCustos += num(l.custo);
     eliteTotal += eliteLinha;
@@ -105,20 +111,9 @@ export default function Dashboard({ user, onLogout }) {
     ? saldoLiquidoSocios
     : saldoLiquidoSocios / 2;
 
-  const socioBValor = isEliteUnico ? 0 : saldoLiquidoSocios / 2;
-
-  /* ======================
-     PIZZA
-  ====================== */
-  const dadosPizza = [
-    { name: "Lucro", value: totalLucro },
-    { name: "Prejuízo", value: totalPrejuizo },
-    { name: "Custos", value: totalCustos },
-    { name: "% Elite", value: eliteTotal }
-  ];
-
-  const CORES = ["#22c55e", "#ef4444", "#f59e0b", "#38bdf8"];
-  const MESES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+  const socioBValor = isEliteUnico
+    ? 0
+    : saldoLiquidoSocios / 2;
 
   /* ======================
      CRUD
@@ -153,12 +148,121 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   /* ======================
-     JSX (INALTERADO)
+     JSX (COMPLETO)
   ====================== */
   return (
     <div className="min-h-screen bg-black text-white">
       <Header user={user} onLogout={onLogout} />
-      {/* TODO O RESTO DO JSX PERMANECE IGUAL AO SEU */}
+
+      <main className="max-w-7xl mx-auto px-6 py-10">
+
+        {/* % ELITE */}
+        <div className="mb-6 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-sm">
+          <p className="text-sm text-zinc-400">% Elite (padrão)</p>
+          <input
+            className="input w-28 text-lg"
+            value={percentualElite}
+            onChange={e => setPercentualElite(limparNumero(e.target.value))}
+          />
+        </div>
+
+        {/* SÓCIOS */}
+        <div className={`grid ${isEliteUnico ? "grid-cols-1" : "grid-cols-2"} gap-6 mb-10`}>
+          {Object.keys(socios).map(k => (
+            <div key={k} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 relative">
+              {editandoSocio === k ? (
+                <input
+                  autoFocus
+                  className="input mb-2"
+                  value={socios[k]}
+                  onChange={e => setSocios({ ...socios, [k]: e.target.value })}
+                  onBlur={() => setEditandoSocio(null)}
+                />
+              ) : (
+                <>
+                  <p className="text-zinc-400 text-sm">Sócio</p>
+                  <h3 className="text-xl font-semibold">{socios[k]}</h3>
+                </>
+              )}
+
+              <button
+                onClick={() => setEditandoSocio(k)}
+                className="absolute top-3 right-3"
+              >
+                ✏️
+              </button>
+
+              <p className="text-elite text-2xl font-bold mt-2">
+                {moeda(k === "a" ? socioAValor : socioBValor)}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* TABELA */}
+        <h2 className="text-xl mb-4">Contas</h2>
+
+        <div className="overflow-x-auto border border-zinc-800 rounded-2xl">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-900">
+              <tr>
+                <th>Conta</th>
+                <th>Senha</th>
+                <th>Fornecedor</th>
+                <th>Saldo Inicial</th>
+                <th>Custo</th>
+                <th>Saldo Final</th>
+                <th>% Elite</th>
+                <th>Lucro</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {linhas.map((l,i)=>{
+                const lucro = calcularLucro(l);
+                const perc = l.percentualElite || percentualElite;
+                const eliteLinha = lucro>0?(lucro*num(perc))/100:0;
+
+                return (
+                  <tr key={i}>
+                    <td><input className="input" value={l.conta} onChange={e=>atualizar(i,"conta",e.target.value)} /></td>
+                    <td><input className="input" value={l.senha} onChange={e=>atualizar(i,"senha",e.target.value)} /></td>
+                    <td><input className="input" value={l.fornecedor} onChange={e=>atualizar(i,"fornecedor",e.target.value)} /></td>
+                    <td><input className="input" value={l.saldoInicial} onChange={e=>atualizar(i,"saldoInicial",limparNumero(e.target.value))} /></td>
+                    <td><input className="input" value={l.custo} onChange={e=>atualizar(i,"custo",limparNumero(e.target.value))} /></td>
+                    <td><input className="input" value={l.saldoFinal} onChange={e=>atualizar(i,"saldoFinal",limparNumero(e.target.value))} /></td>
+                    <td><input className="input w-20" value={l.percentualElite} onChange={e=>atualizar(i,"percentualElite",limparNumero(e.target.value))} /></td>
+
+                    <td>{moeda(lucro)}</td>
+
+                    <td>
+                      <button
+                        onClick={()=>atualizar(i,"elitePago",!l.elitePago)}
+                      >
+                        {l.elitePago?"PAGO":"PENDENTE"}
+                      </button>
+                    </td>
+
+                    <td><input type="date" className="input" value={l.data} onChange={e=>atualizar(i,"data",e.target.value)} /></td>
+                    <td><button onClick={()=>removerLinha(i)}>🗑️</button></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <button
+          onClick={adicionarLinha}
+          className="mt-4 bg-elite text-black px-4 py-2 rounded-xl"
+        >
+          + Adicionar Conta
+        </button>
+
+      </main>
     </div>
   );
 }
