@@ -6,11 +6,25 @@ import {
   where,
   updateDoc,
   deleteDoc,
-  doc
+  doc,
+  getDoc
 } from "firebase/firestore";
-import { db } from "../firebase";
+
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "firebase/auth";
+
+import { db, auth } from "../firebase";
 
 const USERS_COLLECTION = "users";
+
+/* =========================
+   HELPERS
+========================= */
+function emailFake(login) {
+  return `${login.toLowerCase()}@elite.local`;
+}
 
 /* =========================
    VERIFICAR LOGIN ATIVO
@@ -36,11 +50,25 @@ export async function criarUsuario({
   socios,
   percentuais
 }) {
-  if (!senha) throw new Error("Senha obrigatória");
+  if (!login || !senha) {
+    throw new Error("Login e senha são obrigatórios");
+  }
 
+  const email = emailFake(login);
+
+  /* 🔐 1. CRIA NO FIREBASE AUTH */
+  const cred = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    senha
+  );
+
+  const uid = cred.user.uid;
+
+  /* 📄 2. CRIA NO FIRESTORE */
   await addDoc(collection(db, USERS_COLLECTION), {
+    uid,
     login,
-    senha,
     nome,
     role,
     socios,
@@ -54,10 +82,21 @@ export async function criarUsuario({
    LOGIN
 ========================= */
 export async function loginUsuario(login, senha) {
+  const email = emailFake(login);
+
+  /* 🔐 1. AUTENTICA NO AUTH */
+  const cred = await signInWithEmailAndPassword(
+    auth,
+    email,
+    senha
+  );
+
+  const uid = cred.user.uid;
+
+  /* 📄 2. BUSCA DADOS NO FIRESTORE */
   const q = query(
     collection(db, USERS_COLLECTION),
-    where("login", "==", login),
-    where("senha", "==", senha),
+    where("uid", "==", uid),
     where("ativo", "==", true)
   );
 
@@ -65,7 +104,11 @@ export async function loginUsuario(login, senha) {
   if (snap.empty) return null;
 
   const d = snap.docs[0];
-  return { id: d.id, ...d.data() };
+  return {
+    id: d.id,
+    uid,
+    ...d.data()
+  };
 }
 
 /* =========================
