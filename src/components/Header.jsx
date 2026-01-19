@@ -6,7 +6,15 @@ export default function Header({ user, onLogout }) {
 
   return (
     <header className="bg-black border-b border-zinc-800">
-      <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col items-center gap-4">
+      <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col items-center gap-4 relative">
+
+        {/* OPERADORES */}
+        <button
+          onClick={() => (window.location.href = "/operadores")}
+          className="absolute top-6 right-6 px-4 py-1 rounded-full border border-elite text-elite hover:bg-elite hover:text-black transition text-xs"
+        >
+          OPERADORES
+        </button>
 
         {/* LOGO */}
         <img
@@ -23,7 +31,7 @@ export default function Header({ user, onLogout }) {
           </span>
         </h1>
 
-        {/* BOTÃO PAINEL ADMIN */}
+        {/* PAINEL ADMIN */}
         {user?.role === "admin" && (
           <button
             onClick={() => (window.location.href = "/admin")}

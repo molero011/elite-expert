@@ -1,7 +1,8 @@
 import { useState } from "react";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
-import Admin from "./components/Admin"; // ✅ CAMINHO CORRETO
+import Admin from "./components/Admin";
+import Operadores from "./components/Operadores";
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -9,38 +10,33 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // NÃO LOGADO
+  // 🔐 LOGOUT ÚNICO (FONTE DA VERDADE)
+  function logout() {
+    localStorage.removeItem("elite_user");
+    setUser(null);
+    window.location.href = "/";
+  }
+
+  // ❌ NÃO LOGADO
   if (!user) {
     return <Login onLogin={setUser} />;
   }
 
-  // PAINEL ADMIN
+  // 🛠️ PAINEL ADMIN
   if (window.location.pathname === "/admin") {
     if (user.role !== "admin") {
       window.location.href = "/";
       return null;
     }
 
-    return (
-      <Admin
-        user={user}
-        onLogout={() => {
-          localStorage.removeItem("elite_user");
-          setUser(null);
-          window.location.href = "/";
-        }}
-      />
-    );
+    return <Admin user={user} onLogout={logout} />;
   }
 
-  // DASHBOARD NORMAL
-  return (
-    <Dashboard
-      user={user}
-      onLogout={() => {
-        localStorage.removeItem("elite_user");
-        setUser(null);
-      }}
-    />
-  );
+  // 👷 OPERADORES (ADMIN + USER)
+  if (window.location.pathname === "/operadores") {
+    return <Operadores user={user} onLogout={logout} />;
+  }
+
+  // 📊 DASHBOARD PADRÃO
+  return <Dashboard user={user} onLogout={logout} />;
 }
