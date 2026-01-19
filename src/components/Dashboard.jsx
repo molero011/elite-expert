@@ -11,12 +11,10 @@ export default function Dashboard({ user, onLogout }) {
   const [linhas, setLinhas] = useState([]);
   const [percentualElite, setPercentualElite] = useState("20");
   const [mesSelecionado, setMesSelecionado] = useState(null);
-  const [editandoSocio, setEditandoSocio] = useState(null);
 
-  const [socios, setSocios] = useState({
-    a: "Sócio A",
-    b: "Sócio B",
-  });
+  const [socios, setSocios] = useState([
+    { id: 1, nome: "Sócio 1", percentual: 100 },
+  ]);
 
   /* ======================
      LOAD / SAVE
@@ -87,14 +85,15 @@ export default function Dashboard({ user, onLogout }) {
   });
 
   /* ======================
-     REGRA SÓCIOS (CORRIGIDA)
+     REGRA SÓCIOS
      ELITE SAI APENAS DO LUCRO
   ====================== */
-  const saldoLiquidoSocios =
-    saldoFinalTotal - eliteTotal;
+  const saldoLiquidoSocios = saldoFinalTotal - eliteTotal;
 
-  const socioAValor = saldoLiquidoSocios / 2;
-  const socioBValor = saldoLiquidoSocios / 2;
+  const somaPercentuais = socios.reduce(
+    (acc, s) => acc + num(s.percentual),
+    0
+  );
 
   /* ======================
      PIZZA
@@ -113,7 +112,7 @@ export default function Dashboard({ user, onLogout }) {
   ];
 
   /* ======================
-     CRUD
+     CRUD CONTAS
   ====================== */
   function atualizar(i, campo, valor) {
     const c = [...linhas];
@@ -142,6 +141,32 @@ export default function Dashboard({ user, onLogout }) {
     const c = [...linhas];
     c.splice(i, 1);
     setLinhas(c);
+  }
+
+  /* ======================
+     CRUD SÓCIOS
+  ====================== */
+  function adicionarSocio() {
+    setSocios([
+      ...socios,
+      {
+        id: Date.now(),
+        nome: `Sócio ${socios.length + 1}`,
+        percentual: 0,
+      },
+    ]);
+  }
+
+  function removerSocio(id) {
+    setSocios(socios.filter(s => s.id !== id));
+  }
+
+  function atualizarSocio(id, campo, valor) {
+    setSocios(
+      socios.map(s =>
+        s.id === id ? { ...s, [campo]: valor } : s
+      )
+    );
   }
 
   /* ======================
@@ -193,42 +218,72 @@ export default function Dashboard({ user, onLogout }) {
           ))}
         </div>
 
-        {/* SÓCIOS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          {["a", "b"].map(k => (
-            <div
-              key={k}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 relative"
-            >
-              {editandoSocio === k ? (
-                <input
-                  autoFocus
-                  className="input mb-2"
-                  value={socios[k]}
-                  onChange={e =>
-                    setSocios({ ...socios, [k]: e.target.value })
-                  }
-                  onBlur={() => setEditandoSocio(null)}
-                />
-              ) : (
-                <>
-                  <p className="text-zinc-400 text-sm">Sócio</p>
-                  <h3 className="text-xl font-semibold">{socios[k]}</h3>
-                </>
-              )}
+        {/* SÓCIOS DINÂMICOS */}
+        <div className="mb-10">
+          <h2 className="text-xl mb-4">Sócios</h2>
 
-              <button
-                onClick={() => setEditandoSocio(k)}
-                className="absolute top-3 right-3 text-zinc-400 hover:text-elite"
-              >
-                ✏️
-              </button>
+          <div className="grid md:grid-cols-2 gap-6">
+            {socios.map(s => {
+              const valor =
+                somaPercentuais === 100
+                  ? (saldoLiquidoSocios * s.percentual) / 100
+                  : 0;
 
-              <p className="text-elite text-2xl font-bold mt-2">
-                {moeda(k === "a" ? socioAValor : socioBValor)}
-              </p>
-            </div>
-          ))}
+              return (
+                <div
+                  key={s.id}
+                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+                >
+                  <input
+                    className="input mb-2"
+                    value={s.nome}
+                    onChange={e =>
+                      atualizarSocio(s.id, "nome", e.target.value)
+                    }
+                  />
+
+                  <input
+                    className="input mb-2"
+                    value={s.percentual}
+                    onChange={e =>
+                      atualizarSocio(
+                        s.id,
+                        "percentual",
+                        limparNumero(e.target.value)
+                      )
+                    }
+                    placeholder="%"
+                  />
+
+                  <p className="text-elite text-xl font-bold">
+                    {moeda(valor)}
+                  </p>
+
+                  {socios.length > 1 && (
+                    <button
+                      onClick={() => removerSocio(s.id)}
+                      className="text-red-500 text-sm mt-2"
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={adicionarSocio}
+            className="mt-4 px-4 py-2 rounded-xl border border-elite text-elite hover:bg-elite hover:text-black transition"
+          >
+            + Adicionar Sócio
+          </button>
+
+          {somaPercentuais !== 100 && (
+            <p className="text-red-500 mt-2">
+              A soma das porcentagens deve ser 100%
+            </p>
+          )}
         </div>
 
         {/* STATUS ELITE */}
@@ -432,7 +487,7 @@ export default function Dashboard({ user, onLogout }) {
           onClick={adicionarLinha}
           className="mt-4 bg-elite text-black px-4 py-2 rounded-xl"
         >
-          + Adicionar Contas
+          + Adicionar Conta
         </button>
 
       </main>
