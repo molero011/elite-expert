@@ -432,7 +432,7 @@ export default function Dashboard({ user, onLogout }) {
           onClick={adicionarLinha}
           className="mt-4 bg-elite text-black px-4 py-2 rounded-xl"
         >
-          + Adicionar Conta
+          + Adicionar Contas
         </button>
 
       </main>
