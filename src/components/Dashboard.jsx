@@ -87,13 +87,11 @@ export default function Dashboard({ user, onLogout }) {
   });
 
   /* ======================
-     REGRA SÓCIOS
+     REGRA SÓCIOS (CORRIGIDA)
+     ELITE SAI APENAS DO LUCRO
   ====================== */
-  const valorEliteSobreSaldo =
-    (saldoFinalTotal * num(percentualElite)) / 100;
-
   const saldoLiquidoSocios =
-    saldoFinalTotal - valorEliteSobreSaldo;
+    saldoFinalTotal - eliteTotal;
 
   const socioAValor = saldoLiquidoSocios / 2;
   const socioBValor = saldoLiquidoSocios / 2;
@@ -316,7 +314,6 @@ export default function Dashboard({ user, onLogout }) {
                       />
                     </td>
 
-                    {/* 🔐 SENHA COM OLHINHO */}
                     <td className="relative">
                       <input
                         type={l.mostrarSenha ? "text" : "password"}
@@ -326,7 +323,6 @@ export default function Dashboard({ user, onLogout }) {
                           atualizar(i, "senha", e.target.value)
                         }
                       />
-
                       <button
                         type="button"
                         onClick={() =>
